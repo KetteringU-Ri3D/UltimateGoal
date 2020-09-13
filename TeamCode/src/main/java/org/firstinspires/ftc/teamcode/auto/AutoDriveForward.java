@@ -56,10 +56,10 @@ public class AutoDriveForward extends LinearOpMode {
         rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightRearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        leftRearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        rightRearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftRearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightRearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
@@ -127,8 +127,10 @@ public class AutoDriveForward extends LinearOpMode {
 
             // set target position to one tile length diagonally
             targetPosition = 18;
-            while(leftFrontDrive.getTargetPosition() < targetPosition &&
-                  rightFrontDrive.getTargetPosition() < targetPosition) {
+            while(leftFrontDrive.getTargetPosition() < targetPosition ||
+                  leftRearDrive.getTargetPosition() < targetPosition ||
+                  rightFrontDrive.getTargetPosition() < targetPosition ||
+                  rightRearDrive.getTargetPosition() < targetPosition) {
                 // drive straight until position is reached
                 encoderDrive(power, targetPosition, targetPosition);
                 telemetry.update();
@@ -142,7 +144,6 @@ public class AutoDriveForward extends LinearOpMode {
 
             // set target position to 2/3 of one tile length diagonally
             targetPosition = 61;
-
             while(leftFrontDrive.getTargetPosition() < targetPosition &&
                   rightFrontDrive.getTargetPosition() < targetPosition) {
                 // drive straight until position is reached
@@ -182,7 +183,6 @@ public class AutoDriveForward extends LinearOpMode {
             if(gamepad1.a) {
                 phoneCam.stopStreaming();
             }
-
         }
 
         // turn the motors off.
@@ -190,6 +190,11 @@ public class AutoDriveForward extends LinearOpMode {
         leftRearDrive.setPower(0);
         rightFrontDrive.setPower(0);
         rightRearDrive.setPower(0);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftRearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightRearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
     
     private void encoderDrive(double speed, double leftInches, double rightInches) {
@@ -218,7 +223,7 @@ public class AutoDriveForward extends LinearOpMode {
             rightFrontDrive.setPower(Math.abs(speed));
             rightRearDrive.setPower(Math.abs(speed));
 
-            // top all motion
+            // stop all motion
             leftFrontDrive.setPower(0);
             leftRearDrive.setPower(0);
             rightFrontDrive.setPower(0);
@@ -230,7 +235,7 @@ public class AutoDriveForward extends LinearOpMode {
             rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightRearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            sleep(250);   // optional pause after each move
+//            sleep(250);   // optional pause after each move
         }
     }
 
