@@ -89,6 +89,9 @@ public class OpMode extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
+            /*
+             * drive code
+             */
             // Setup a variable for each drive wheel to save power level for telemetry
             double leftPower;
             double rightPower;
@@ -100,19 +103,70 @@ public class OpMode extends LinearOpMode {
             rightPower = Range.clip(drive - turn, -1.0, 1.0);
 
             // tank drive
-            // leftPower  = -gamepad1.left_stick_y ;
-            // rightPower = -gamepad1.right_stick_y ;
+            // leftPower = -gamepad1.left_stick_y;
+            // rightPower = -gamepad1.right_stick_y;
 
-            // Send calculated power to wheels
             leftFrontDrive.setPower(leftPower);
             leftRearDrive.setPower(leftPower);
             rightFrontDrive.setPower(rightPower);
             rightRearDrive.setPower(rightPower);
+
+            /*
+             * intake code
+             */
+            double intakePower = 0.5;
+            if(gamepad1.right_trigger >= 0.2) {
+                intakeMotor.setPower(intakePower);
+            }
+            else if(gamepad1.a) {
+                intakeMotor.setPower(-intakePower);
+            }
+
+            /*
+             * indexer code
+             */
+            double indexerPower = 0.5;
+            if(gamepad1.left_trigger >= 0.2) {
+                indexerMotor.setPower(indexerPower);
+            }
+            else if(gamepad1.left_bumper) {
+                indexerMotor.setPower(-indexerPower);
+            }
+
+            /*
+             * wobble goal code
+             */
+            double wobblePower = 0.5;
+            if(gamepad1.y) {
+                wobbleMotor.setPower(wobblePower);
+            }
+            else if(gamepad1.b) {
+                wobbleMotor.setPower(-wobblePower);
+            }
+
+            /*
+             * shooter code
+             */
+            double shooterPower = 0.5;
+            if(buttonClick(gamepad1.right_bumper)) {
+                shooterMotor.setPower(shooterPower);
+            }
+            else if(!buttonClick(gamepad1.right_bumper)) {
+                shooterMotor.setPower(0);
+            }
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();
         }
+    }
+
+    private boolean buttonPreviousState;
+    public boolean buttonClick (boolean button) {
+        boolean returnVal;
+        returnVal = button && !buttonPreviousState;
+        buttonPreviousState = button;
+        return returnVal;
     }
 }
