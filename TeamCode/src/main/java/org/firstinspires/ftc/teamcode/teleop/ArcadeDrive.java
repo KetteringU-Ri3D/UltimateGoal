@@ -38,6 +38,8 @@ import com.qualcomm.robotcore.util.Range;
 @TeleOp(name="OpMode", group="Linear Opmode")
 //@Disabled
 public class ArcadeDrive extends LinearOpMode {
+    DcMotor leftFrontDrive, leftRearDrive, rightFrontDrive, rightRearDrive,
+            intake, indexer, shooter, wobble;
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -50,14 +52,14 @@ public class ArcadeDrive extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        DcMotor leftFrontDrive  = hardwareMap.get(DcMotor.class, "left_front_drive");
-        DcMotor leftRearDrive = hardwareMap.get(DcMotor.class, "left_rear_drive");
-        DcMotor rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
-        DcMotor rightRearDrive = hardwareMap.get(DcMotor.class, "right_rear_drive");
-        DcMotor intake = hardwareMap.get(DcMotor.class, "intake");
-        DcMotor indexer = hardwareMap.get(DcMotor.class, "indexer");
-        DcMotor shooter = hardwareMap.get(DcMotor.class, "shooter");
-        DcMotor wobble = hardwareMap.get(DcMotor.class, "wobble");
+        leftFrontDrive  = hardwareMap.get(DcMotor.class, "left_front_drive");
+        leftRearDrive = hardwareMap.get(DcMotor.class, "left_rear_drive");
+        rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
+        rightRearDrive = hardwareMap.get(DcMotor.class, "right_rear_drive");
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        indexer = hardwareMap.get(DcMotor.class, "indexer");
+        shooter = hardwareMap.get(DcMotor.class, "shooter");
+        wobble = hardwareMap.get(DcMotor.class, "wobble");
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();

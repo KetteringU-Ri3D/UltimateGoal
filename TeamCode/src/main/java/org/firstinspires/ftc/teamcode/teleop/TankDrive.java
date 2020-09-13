@@ -37,6 +37,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name="TankDrive", group="Linear Opmode")
 //@Disabled
 public class TankDrive extends LinearOpMode {
+    DcMotor leftFrontDrive, leftRearDrive, rightFrontDrive, rightRearDrive,
+            intake, indexer, shooter, wobble;
 
     // Declare OpMode members
     private ElapsedTime runtime = new ElapsedTime();
@@ -49,14 +51,14 @@ public class TankDrive extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        DcMotor leftFrontDrive = hardwareMap.get(DcMotor.class, "left_front_drive");
-        DcMotor leftRearDrive = hardwareMap.get(DcMotor.class, "left_rear_drive");
-        DcMotor rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
-        DcMotor rightRearDrive = hardwareMap.get(DcMotor.class, "right_rear_drive");
-        DcMotor intakeMotor = hardwareMap.get(DcMotor.class, "intake");
-        DcMotor indexerMotor = hardwareMap.get(DcMotor.class, "indexer");
-        DcMotor shooterMotor = hardwareMap.get(DcMotor.class, "shooter");
-        DcMotor wobbleMotor = hardwareMap.get(DcMotor.class, "wobble");
+        leftFrontDrive = hardwareMap.get(DcMotor.class, "left_front_drive");
+        leftRearDrive = hardwareMap.get(DcMotor.class, "left_rear_drive");
+        rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
+        rightRearDrive = hardwareMap.get(DcMotor.class, "right_rear_drive");
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        indexer = hardwareMap.get(DcMotor.class, "indexer");
+        shooter = hardwareMap.get(DcMotor.class, "shooter");
+        wobble = hardwareMap.get(DcMotor.class, "wobble");
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -92,10 +94,10 @@ public class TankDrive extends LinearOpMode {
              */
             double intakePower = 0.5;
             if(gamepad1.right_trigger >= 0.2) {
-                intakeMotor.setPower(intakePower);
+                intake.setPower(intakePower);
             }
             else if(gamepad1.a) {
-                intakeMotor.setPower(-intakePower);
+                intake.setPower(-intakePower);
             }
 
             /*
@@ -103,10 +105,10 @@ public class TankDrive extends LinearOpMode {
              */
             double indexerPower = 0.5;
             if(gamepad1.left_trigger >= 0.2) {
-                indexerMotor.setPower(indexerPower);
+                indexer.setPower(indexerPower);
             }
             else if(gamepad1.left_bumper) {
-                indexerMotor.setPower(-indexerPower);
+                indexer.setPower(-indexerPower);
             }
 
             /*
@@ -114,10 +116,10 @@ public class TankDrive extends LinearOpMode {
              */
             double wobblePower = 0.5;
             if(gamepad1.y) {
-                wobbleMotor.setPower(wobblePower);
+                wobble.setPower(wobblePower);
             }
             else if(gamepad1.b) {
-                wobbleMotor.setPower(-wobblePower);
+                wobble.setPower(-wobblePower);
             }
 
             /*
@@ -125,10 +127,10 @@ public class TankDrive extends LinearOpMode {
              */
             double shooterPower = 0.5;
             if(buttonClick(gamepad1.right_bumper)) {
-                shooterMotor.setPower(shooterPower);
+                shooter.setPower(shooterPower);
             }
             else if(!buttonClick(gamepad1.right_bumper)) {
-                shooterMotor.setPower(0);
+                shooter.setPower(0);
             }
 
             // Show the elapsed game time and wheel power.
