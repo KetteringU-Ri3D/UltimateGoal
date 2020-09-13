@@ -19,17 +19,13 @@
  * SOFTWARE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.auto;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -37,14 +33,13 @@ import org.openftc.easyopencv.OpenCvInternalCamera;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 @TeleOp
-public class OpenCVTestMode extends LinearOpMode
-{
+@Disabled
+public class OpenCVTestMode extends LinearOpMode {
     OpenCvCamera phoneCam;
     RingContour contour = new RingContour();
 
     @Override
-    public void runOpMode()
-    {
+    public void runOpMode() {
         /*
          * Instantiate an OpenCvCamera object for the camera we'll be using.
          * In this sample, we're using a webcam. Note that you will need to
@@ -110,8 +105,7 @@ public class OpenCVTestMode extends LinearOpMode
          */
         waitForStart();
 
-        while (opModeIsActive())
-        {
+        while (opModeIsActive()) {
             /*
              * Send some stats to the telemetry
              */
@@ -130,8 +124,7 @@ public class OpenCVTestMode extends LinearOpMode
              * when it will be automatically stopped for you) *IS* supported. The "if" statement
              * below will stop streaming from the camera when the "A" button on gamepad 1 is pressed.
              */
-            if(gamepad1.a)
-            {
+            if(gamepad1.a) {
                 /*
                  * IMPORTANT NOTE: calling stopStreaming() will indeed stop the stream of images
                  * from the camera (and, by extension, stop calling your vision pipeline). HOWEVER,
@@ -179,8 +172,7 @@ public class OpenCVTestMode extends LinearOpMode
      * if you're doing something weird where you do need it synchronized with your OpMode thread,
      * then you will need to account for that accordingly.
      */
-    class SamplePipeline extends OpenCvPipeline
-    {
+    class SamplePipeline extends OpenCvPipeline {
         boolean viewportPaused;
 
         /*
@@ -193,8 +185,7 @@ public class OpenCVTestMode extends LinearOpMode
          */
 
         @Override
-        public Mat processFrame(Mat input)
-        {
+        public Mat processFrame(Mat input) {
             //telemetry.addData("frame channels: ", input.channels());
             //telemetry.update();
             Mat out = contour.process(input, telemetry);
@@ -202,8 +193,7 @@ public class OpenCVTestMode extends LinearOpMode
         }
 
         @Override
-        public void onViewportTapped()
-        {
+        public void onViewportTapped() {
             /*
              * The viewport (if one was specified in the constructor) can also be dynamically "paused"
              * and "resumed". The primary use case of this is to reduce CPU, memory, and power load
@@ -218,12 +208,10 @@ public class OpenCVTestMode extends LinearOpMode
 
             viewportPaused = !viewportPaused;
 
-            if(viewportPaused)
-            {
+            if(viewportPaused) {
                 phoneCam.pauseViewport();
             }
-            else
-            {
+            else {
                 phoneCam.resumeViewport();
             }
         }

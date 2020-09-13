@@ -9,14 +9,29 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.opencv.core.Mat;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvInternalCamera;
+import org.openftc.easyopencv.OpenCvPipeline;
 
-@Autonomous(name="Drive Avoid Imu", group="Exercises")
+@Autonomous(name="AutoTest", group="Exercises")
 //@Disabled
 public class AutoDriveForward extends LinearOpMode {
-    DcMotor leftFrontDrive, leftRearDrive, rightFrontDrive, rightRearDrive;
+    static final double COUNTS_PER_MOTOR_REV = 537.6;
+    static final double DRIVE_GEAR_REDUCTION = 2.0;
+    static final double WHEEL_DIAMETER_INCHES = 4.0;
+    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+                                          (WHEEL_DIAMETER_INCHES * 3.1415);
+
+    DcMotor leftFrontDrive, leftRearDrive, rightFrontDrive, rightRearDrive,
+            indexer, shooter;
     BNO055IMU imu;
+    OpenCvCamera phoneCam;
+    RingContour contour = new RingContour();
     Orientation lastAngles = new Orientation();
-    double globalAngle, power = .30, correction;
+    double globalAngle, power = .30, correction, targetPosition;
 
     // called when init button is  pressed
     @Override
@@ -25,6 +40,8 @@ public class AutoDriveForward extends LinearOpMode {
         leftRearDrive = hardwareMap.get(DcMotor.class, "left_rear_drive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightRearDrive = hardwareMap.get(DcMotor.class, "right_rear_drive");
+        indexer = hardwareMap.get(DcMotor.class, "indexer");
+        shooter = hardwareMap.get(DcMotor.class, "shooter");
 
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightRearDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -33,6 +50,16 @@ public class AutoDriveForward extends LinearOpMode {
         leftRearDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightRearDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftRearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightRearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftRearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        rightRearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
@@ -61,6 +88,23 @@ public class AutoDriveForward extends LinearOpMode {
         telemetry.addData("Calibration status", imu.getCalibrationStatus().toString());
         telemetry.update();
 
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        phoneCam = OpenCvCameraFactory.getInstance().createInternalCamera(OpenCvInternalCamera.CameraDirection.BACK, cameraMonitorViewId);
+
+        phoneCam.setPipeline(new SamplePipeline());
+
+        telemetry.addLine("Waiting for start");
+        telemetry.update();
+
+        phoneCam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        {
+            @Override
+            public void onOpened()
+            {
+                phoneCam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+            }
+        });
+
         // wait for start button
         waitForStart();
 
@@ -77,29 +121,67 @@ public class AutoDriveForward extends LinearOpMode {
             telemetry.addData("1 imu heading", lastAngles.firstAngle);
             telemetry.addData("2 global heading", globalAngle);
             telemetry.addData("3 correction", correction);
+            telemetry.addData("4 lfe", leftFrontDrive.getCurrentPosition());
+            telemetry.addData("5 rfe", rightFrontDrive.getCurrentPosition());
             telemetry.update();
 
-            // drive straight
-            leftFrontDrive.setPower(power - correction);
-            leftRearDrive.setPower(power - correction);
-            rightFrontDrive.setPower(power + correction);
-            rightRearDrive.setPower(power + correction);
+            // set target position to one tile length diagonally
+            targetPosition = 18;
+            while(leftFrontDrive.getTargetPosition() < targetPosition &&
+                  rightFrontDrive.getTargetPosition() < targetPosition) {
+                // drive straight until position is reached
+                encoderDrive(power, targetPosition, targetPosition);
+                telemetry.update();
+            }
 
-            // stop
-            leftFrontDrive.setPower(0);
-            leftRearDrive.setPower(0);
-            rightFrontDrive.setPower(0);
-            rightRearDrive.setPower(0);
+//            // stop
+//            leftFrontDrive.setPower(0);
+//            leftRearDrive.setPower(0);
+//            rightFrontDrive.setPower(0);
+//            rightRearDrive.setPower(0);
 
-            // turn 90 degrees left
-            rotate(90, power);
+            // set target position to 2/3 of one tile length diagonally
+            targetPosition = 61;
 
-            /*
-             * TODO: check for rings and act based on that
-             */
+            while(leftFrontDrive.getTargetPosition() < targetPosition &&
+                  rightFrontDrive.getTargetPosition() < targetPosition) {
+                // drive straight until position is reached
+                encoderDrive(power, targetPosition, targetPosition);
+                telemetry.update();
+            }
 
-            // turn 45 degrees right
-            rotate(-45, power);
+            // shoot left power shot
+            rotate(-3, power);
+            shoot();
+            // shoot middle power shot
+            rotate(3, power);
+            shoot();
+            // shoot right power shot
+            rotate(3, power);
+            shoot();
+
+//            // turn 90 degrees left
+//            rotate(90, power);
+//
+//
+//            /*
+//             * TODO: check for rings and act based on that
+//             */
+//            if(contour.getRingNumber() == 1) {
+//                // TODO: add what to do here
+//            }
+//            else if(contour.getRingNumber() == 4) {
+//                // TODO: add what to do here
+//            }
+//            else if(contour.getRingNumber() == 0) {
+//                // turn 45 degrees right
+//                rotate(-45, power);
+//            }
+
+            // turn off camera
+            if(gamepad1.a) {
+                phoneCam.stopStreaming();
+            }
 
         }
 
@@ -108,6 +190,60 @@ public class AutoDriveForward extends LinearOpMode {
         leftRearDrive.setPower(0);
         rightFrontDrive.setPower(0);
         rightRearDrive.setPower(0);
+    }
+    
+    private void encoderDrive(double speed, double leftInches, double rightInches) {
+        int newLeftTarget;
+        int newRightTarget;
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            newLeftTarget = leftFrontDrive.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
+            newRightTarget = rightFrontDrive.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
+            leftFrontDrive.setTargetPosition(newLeftTarget);
+            leftRearDrive.setTargetPosition(newLeftTarget);
+            rightFrontDrive.setTargetPosition(newRightTarget);
+            rightRearDrive.setTargetPosition(newRightTarget);
+
+            // Turn On RUN_TO_POSITION
+            leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            leftRearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightRearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            leftFrontDrive.setPower(Math.abs(speed));
+            leftRearDrive.setPower(Math.abs(speed));
+            rightFrontDrive.setPower(Math.abs(speed));
+            rightRearDrive.setPower(Math.abs(speed));
+
+            // top all motion
+            leftFrontDrive.setPower(0);
+            leftRearDrive.setPower(0);
+            rightFrontDrive.setPower(0);
+            rightRearDrive.setPower(0);
+
+            // turn off RUN_TO_POSITION
+            leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            leftRearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightRearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(250);   // optional pause after each move
+        }
+    }
+
+    private void shoot() {
+        final double shooterPower = 0.5;
+        double indexerPower = 0.5;
+        shooter.setPower(shooterPower);
+        sleep(1000);
+        shooter.setPower(shooterPower);
+        indexer.setPower(indexerPower);
+        sleep(2000);
+        shooter.setPower(0);
+        indexer.setPower(0);
     }
 
     /**
@@ -220,5 +356,50 @@ public class AutoDriveForward extends LinearOpMode {
 
         // reset angle tracking on new heading.
         resetAngle();
+    }
+
+    class SamplePipeline extends OpenCvPipeline {
+        boolean viewportPaused;
+
+        /*
+         * NOTE: if you wish to use additional Mat objects in your processing pipeline, it is
+         * highly recommended to declare them here as instance variables and re-use them for
+         * each invocation of processFrame(), rather than declaring them as new local variables
+         * each time through processFrame(). This removes the danger of causing a memory leak
+         * by forgetting to call mat.release(), and it also reduces memory pressure by not
+         * constantly allocating and freeing large chunks of memory.
+         */
+
+        @Override
+        public Mat processFrame(Mat input) {
+            //telemetry.addData("frame channels: ", input.channels());
+            //telemetry.update();
+            Mat out = contour.process(input, telemetry);
+            return out;
+        }
+
+        @Override
+        public void onViewportTapped() {
+            /*
+             * The viewport (if one was specified in the constructor) can also be dynamically "paused"
+             * and "resumed". The primary use case of this is to reduce CPU, memory, and power load
+             * when you need your vision pipeline running, but do not require a live preview on the
+             * robot controller screen. For instance, this could be useful if you wish to see the live
+             * camera preview as you are initializing your robot, but you no longer require the live
+             * preview after you have finished your initialization process; pausing the viewport does
+             * not stop running your pipeline.
+             *
+             * Here we demonstrate dynamically pausing/resuming the viewport when the user taps it
+             */
+
+            viewportPaused = !viewportPaused;
+
+            if(viewportPaused) {
+                phoneCam.pauseViewport();
+            }
+            else {
+                phoneCam.resumeViewport();
+            }
+        }
     }
 }

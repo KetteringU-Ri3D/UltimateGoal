@@ -35,7 +35,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-@TeleOp(name="OpMode", group="Linear Opmode")
+@TeleOp(name="Arcade", group="Linear Opmode")
 //@Disabled
 public class ArcadeDrive extends LinearOpMode {
     DcMotor leftFrontDrive, leftRearDrive, rightFrontDrive, rightRearDrive,
@@ -123,6 +123,14 @@ public class ArcadeDrive extends LinearOpMode {
                 wobble.setPower(-wobblePower);
             }
 
+            // TEST
+            if(gamepad1.dpad_up) {
+                shoot();
+            }
+            else if(gamepad1.dpad_down) {
+                shoot();
+            }
+
             /*
              * shooter code
              */
@@ -139,6 +147,17 @@ public class ArcadeDrive extends LinearOpMode {
             telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();
         }
+    }
+    private void shoot() {
+        final double shooterPower = 0.5;
+        double indexerPower = 0.5;
+        shooter.setPower(shooterPower);
+        sleep(1000);
+        shooter.setPower(shooterPower);
+        indexer.setPower(indexerPower);
+        sleep(2000);
+        shooter.setPower(0);
+        indexer.setPower(0);
     }
 
     private boolean buttonPreviousState;
