@@ -4,6 +4,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -19,11 +20,11 @@ import org.openftc.easyopencv.OpenCvPipeline;
 @Autonomous(name="AutoTest", group="Exercises")
 //@Disabled
 public class AutoDriveForward extends LinearOpMode {
-    static final double COUNTS_PER_MOTOR_REV = 537.6;
-    static final double DRIVE_GEAR_REDUCTION = 2.0;
-    static final double WHEEL_DIAMETER_INCHES = 4.0;
-    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-                                          (WHEEL_DIAMETER_INCHES * 3.1415);
+    static final double PULSES = 537.6;
+    static final double GEAR_RATIO = 1.0;
+    static final double DIAMETER = 4.0;
+    static final double CIRCUMFERENCE = DIAMETER * Math.PI;
+    static final double COUNTS = (PULSES * GEAR_RATIO) / CIRCUMFERENCE;
 
     DcMotor leftFrontDrive, leftRearDrive, rightFrontDrive, rightRearDrive,
             indexer, shooter;
@@ -31,7 +32,8 @@ public class AutoDriveForward extends LinearOpMode {
     OpenCvCamera phoneCam;
     RingContour contour = new RingContour();
     Orientation lastAngles = new Orientation();
-    double globalAngle, power = .30, correction, targetPosition;
+    double globalAngle, power = .30, correction, targetPosition, timeout = 1;
+    private ElapsedTime runtime = new ElapsedTime();
 
     // called when init button is  pressed
     @Override
@@ -113,11 +115,26 @@ public class AutoDriveForward extends LinearOpMode {
 
         sleep(1000);
 
+        // set target position to one tile length diagonally
+        targetPosition = 18;
+        encoderDrive(power, targetPosition, targetPosition, timeout);
+
+        // set target position to 2/3 of one tile length diagonally
+        targetPosition = 61;
+        encoderDrive(power, targetPosition, targetPosition, timeout);
+
+        // shoot left power shot
+        rotate(-3, power);
+        shoot();
+        // shoot middle power shot
+        rotate(3, power);
+        shoot();
+        // shoot right power shot
+        rotate(3, power);
+        shoot();
+
         // drive until end of period
         while (opModeIsActive()) {
-            // use gyro to drive straight
-            correction = checkDirection();
-
             telemetry.addData("1 imu heading", lastAngles.firstAngle);
             telemetry.addData("2 global heading", globalAngle);
             telemetry.addData("3 correction", correction);
@@ -125,79 +142,14 @@ public class AutoDriveForward extends LinearOpMode {
             telemetry.addData("5 rfe", rightFrontDrive.getCurrentPosition());
             telemetry.update();
 
-            // set target position to one tile length diagonally
-            targetPosition = 18;
-            while(leftFrontDrive.getTargetPosition() < targetPosition ||
-                  leftRearDrive.getTargetPosition() < targetPosition ||
-                  rightFrontDrive.getTargetPosition() < targetPosition ||
-                  rightRearDrive.getTargetPosition() < targetPosition) {
-                // drive straight until position is reached
-                encoderDrive(power, targetPosition, targetPosition);
-                telemetry.update();
-            }
-
-//            // stop
-//            leftFrontDrive.setPower(0);
-//            leftRearDrive.setPower(0);
-//            rightFrontDrive.setPower(0);
-//            rightRearDrive.setPower(0);
-
-            // set target position to 2/3 of one tile length diagonally
-            targetPosition = 61;
-            while(leftFrontDrive.getTargetPosition() < targetPosition &&
-                  rightFrontDrive.getTargetPosition() < targetPosition) {
-                // drive straight until position is reached
-                encoderDrive(power, targetPosition, targetPosition);
-                telemetry.update();
-            }
-
-            // shoot left power shot
-            rotate(-3, power);
-            shoot();
-            // shoot middle power shot
-            rotate(3, power);
-            shoot();
-            // shoot right power shot
-            rotate(3, power);
-            shoot();
-
-//            // turn 90 degrees left
-//            rotate(90, power);
-//
-//
-//            /*
-//             * TODO: check for rings and act based on that
-//             */
-//            if(contour.getRingNumber() == 1) {
-//                // TODO: add what to do here
-//            }
-//            else if(contour.getRingNumber() == 4) {
-//                // TODO: add what to do here
-//            }
-//            else if(contour.getRingNumber() == 0) {
-//                // turn 45 degrees right
-//                rotate(-45, power);
-//            }
-
             // turn off camera
             if(gamepad1.a) {
                 phoneCam.stopStreaming();
             }
         }
-
-        // turn the motors off.
-        leftFrontDrive.setPower(0);
-        leftRearDrive.setPower(0);
-        rightFrontDrive.setPower(0);
-        rightRearDrive.setPower(0);
-
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftRearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightRearDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
     
-    private void encoderDrive(double speed, double leftInches, double rightInches) {
+    private void encoderDrive(double speed, double leftInches, double rightInches, double timeout) {
         int newLeftTarget;
         int newRightTarget;
 
@@ -205,8 +157,8 @@ public class AutoDriveForward extends LinearOpMode {
         if (opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            newLeftTarget = leftFrontDrive.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
-            newRightTarget = rightFrontDrive.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
+            newLeftTarget = leftFrontDrive.getCurrentPosition() + (int)(leftInches * COUNTS);
+            newRightTarget = rightFrontDrive.getCurrentPosition() + (int)(rightInches * COUNTS);
             leftFrontDrive.setTargetPosition(newLeftTarget);
             leftRearDrive.setTargetPosition(newLeftTarget);
             rightFrontDrive.setTargetPosition(newRightTarget);
@@ -218,16 +170,35 @@ public class AutoDriveForward extends LinearOpMode {
             rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             rightRearDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+            runtime.reset();
             leftFrontDrive.setPower(Math.abs(speed));
             leftRearDrive.setPower(Math.abs(speed));
             rightFrontDrive.setPower(Math.abs(speed));
             rightRearDrive.setPower(Math.abs(speed));
+
+            while(opModeIsActive() &&
+                 (runtime.seconds() < timeout) &&
+                 (leftFrontDrive.isBusy() && leftRearDrive.isBusy()  &&
+                  rightFrontDrive.isBusy() && rightRearDrive.isBusy())) {
+                // Display it for the driver.
+                telemetry.addData("Path1",  "Running to %7d :%7d", newLeftTarget,  newRightTarget);
+                telemetry.addData("Path2",  "Running at %7d :%7d",
+                        leftFrontDrive.getCurrentPosition(),
+                        rightFrontDrive.getCurrentPosition());
+                telemetry.update();
+            }
 
             // stop all motion
             leftFrontDrive.setPower(0);
             leftRearDrive.setPower(0);
             rightFrontDrive.setPower(0);
             rightRearDrive.setPower(0);
+
+            // reset encoder then continue
+            leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            leftRearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            rightRearDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
             // turn off RUN_TO_POSITION
             leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
