@@ -18,7 +18,7 @@ public class AutoDriveForward extends LinearOpMode {
     Orientation lastAngles = new Orientation();
     double globalAngle, power = .30, correction;
 
-    // called when init button is  pressed.
+    // called when init button is  pressed
     @Override
     public void runOpMode() {
         leftFrontDrive  = hardwareMap.get(DcMotor.class, "left_front_drive");
@@ -26,8 +26,8 @@ public class AutoDriveForward extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightRearDrive = hardwareMap.get(DcMotor.class, "right_rear_drive");
 
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftRearDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightRearDrive.setDirection(DcMotor.Direction.REVERSE);
 
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftRearDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -43,7 +43,7 @@ public class AutoDriveForward extends LinearOpMode {
 
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
-        // and named "imu".
+        // and named "imu"
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
         imu.initialize(parameters);
@@ -51,18 +51,17 @@ public class AutoDriveForward extends LinearOpMode {
         telemetry.addData("Mode", "calibrating...");
         telemetry.update();
 
-        // make sure the imu gyro is calibrated before continuing.
+        // make sure the imu gyro is calibrated before continuing
         while (!isStopRequested() && !imu.isGyroCalibrated()) {
             sleep(50);
             idle();
         }
 
         telemetry.addData("Mode", "waiting for start");
-        telemetry.addData("imu calib status", imu.getCalibrationStatus().toString());
+        telemetry.addData("Calibration status", imu.getCalibrationStatus().toString());
         telemetry.update();
 
-        // wait for start button.
-
+        // wait for start button
         waitForStart();
 
         telemetry.addData("Mode", "running");
@@ -70,8 +69,7 @@ public class AutoDriveForward extends LinearOpMode {
 
         sleep(1000);
 
-        // drive until end of period.
-
+        // drive until end of period
         while (opModeIsActive()) {
             // use gyro to drive straight
             correction = checkDirection();
@@ -93,8 +91,16 @@ public class AutoDriveForward extends LinearOpMode {
             rightFrontDrive.setPower(0);
             rightRearDrive.setPower(0);
 
-            // turn 90 degrees right
-            rotate(-90, power);
+            // turn 90 degrees left
+            rotate(90, power);
+
+            /*
+             * TODO: check for rings and act based on that
+             */
+
+            // turn 45 degrees right
+            rotate(-45, power);
+
         }
 
         // turn the motors off.
