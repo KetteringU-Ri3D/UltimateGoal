@@ -36,7 +36,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="TankDrive", group="Linear Opmode")
 //@Disabled
+
 public class TankDrive extends LinearOpMode {
+
+    boolean intakeOn = false;
+    boolean indexerOn = false;
+    boolean shooterOn = false;
+
     DcMotor leftFrontDrive, leftRearDrive, rightFrontDrive, rightRearDrive,
             intake, indexer, shooter, wobble;
 
@@ -77,11 +83,11 @@ public class TankDrive extends LinearOpMode {
             // arcade drive
             // double drive = -gamepad1.left_stick_y;
             // double turn = gamepad1.right_stick_x;
-            // leftPower = Range.clip(drive + turn, -1.0, 1.0);
-            // rightPower = Range.clip(drive - turn, -1.0, 1.0);
+            // leftPower = Range.clip(drive + turn, 1.0, -1.0);
+            // rightPower = Range.clip(drive - turn, 1.0, -1.0);
 
             // tank drive
-            leftPower = -gamepad1.left_stick_y;
+            leftPower = gamepad1.left_stick_y;
             rightPower = -gamepad1.right_stick_y;
 
             leftFrontDrive.setPower(leftPower);
@@ -93,44 +99,66 @@ public class TankDrive extends LinearOpMode {
              * intake code
              */
             double intakePower = 0.5;
-            if(gamepad1.right_trigger >= 0.2) {
-                intake.setPower(intakePower);
-            }
-            else if(gamepad1.a) {
-                intake.setPower(-intakePower);
-            }
-
-            /*
-             * indexer code
-             */
-            double indexerPower = 0.5;
-            if(gamepad1.left_trigger >= 0.2) {
-                indexer.setPower(indexerPower);
-            }
-            else if(gamepad1.left_bumper) {
-                indexer.setPower(-indexerPower);
+            if(gamepad1.right_trigger > 0.2) {
+                if(intakeOn) {
+                    intake.setPower(0);
+                    intakeOn = false;
+                } else {
+                    intake.setPower(intakePower);
+                    intakeOn = true;
+                }
             }
 
-            /*
-             * wobble goal code
-             */
-            double wobblePower = 0.5;
-            if(gamepad1.y) {
-                wobble.setPower(wobblePower);
-            }
-            else if(gamepad1.b) {
-                wobble.setPower(-wobblePower);
+            if(gamepad1.left_trigger > 0.2) {
+                if(intakeOn) {
+                    intake.setPower(0);
+                    intakeOn = false;
+                } else {
+                    intake.setPower(-intakePower);
+                    intakeOn = true;
+                }
             }
 
-            /*
-             * shooter code
-             */
-            double shooterPower = 0.5;
-            if(buttonClick(gamepad1.right_bumper)) {
-                shooter.setPower(shooterPower);
+            double indexerPower = 0.75;
+            if(gamepad1.right_bumper) {
+                if(indexerOn) {
+                    indexer.setPower(0);
+                    indexerOn = false;
+                } else {
+                    indexer.setPower(indexerPower);
+                    indexerOn = true;
+                }
             }
-            else if(!buttonClick(gamepad1.right_bumper)) {
-                shooter.setPower(0);
+
+            if(gamepad1.left_bumper) {
+                if(indexerOn) {
+                    indexer.setPower(0);
+                    indexerOn = false;
+                } else {
+                    indexer.setPower(-indexerPower);
+                    indexerOn = true;
+                }
+            }
+
+            double shooterPower = 0.9;
+            if(buttonClick(gamepad1.y)) {
+                if(shooterOn) {
+                    wobble.setPower(0);
+                    shooterOn = false;
+                } else {
+                    wobble.setPower(0.5);
+                    shooterOn = true;
+                }
+            }
+
+            if(buttonClick(gamepad1.x)) {
+                if(shooterOn) {
+                    wobble.setPower(0);
+                    shooterOn = false;
+                } else {
+                    wobble.setPower(-0.5);
+                    shooterOn = true;
+                }
             }
 
             // Show the elapsed game time and wheel power.
