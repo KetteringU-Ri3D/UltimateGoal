@@ -61,8 +61,6 @@ public class ArcadeDrive extends LinearOpMode {
         shooter = hardwareMap.get(DcMotor.class, "shooter");
         wobble = hardwareMap.get(DcMotor.class, "wobble");
 
-
-
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
@@ -79,13 +77,9 @@ public class ArcadeDrive extends LinearOpMode {
 
             // arcade drive
             double turn = gamepad1.left_stick_y;
-            double drive = gamepad1.right_stick_x;
+            double drive = -gamepad1.right_stick_x;
             leftPower = Range.clip(drive + turn, -1.0, 1.0);
             rightPower = Range.clip(drive - turn, -1.0, 1.0);
-
-            // tank drive
-            // leftPower = -gamepad1.left_stick_y;
-            // rightPower = -gamepad1.right_stick_y;
 
             leftFrontDrive.setPower(leftPower);
             leftRearDrive.setPower(leftPower);
@@ -95,23 +89,29 @@ public class ArcadeDrive extends LinearOpMode {
             /*
              * intake code
              */
-            double intakePower = 0.5;
+            double intakePower = 1.0;
             if(gamepad1.right_trigger >= 0.2) {
                 intake.setPower(intakePower);
             }
             else if(gamepad1.a) {
                 intake.setPower(-intakePower);
             }
+            else {
+                intake.setPower(0);
+            }
 
             /*
              * indexer code
              */
-            double indexerPower = 0.5;
+            double indexerPower = 0.7;
             if(gamepad1.left_trigger >= 0.2) {
                 indexer.setPower(indexerPower);
             }
             else if(gamepad1.left_bumper) {
                 indexer.setPower(-indexerPower);
+            }
+            else {
+                indexer.setPower(0);
             }
 
             /*
@@ -124,23 +124,18 @@ public class ArcadeDrive extends LinearOpMode {
             else if(gamepad1.b) {
                 wobble.setPower(-wobblePower);
             }
-
-            // TEST
-            if(gamepad1.dpad_up) {
-                shoot();
-            }
-            else if(gamepad1.dpad_down) {
-                shoot();
+            else {
+                wobble.setPower(0);
             }
 
             /*
              * shooter code
              */
             double shooterPower = 0.5;
-            if(buttonClick(gamepad1.right_bumper)) {
+            if(gamepad1.right_bumper) {
                 shooter.setPower(shooterPower);
             }
-            else if(!buttonClick(gamepad1.right_bumper)) {
+            else {
                 shooter.setPower(0);
             }
 
